@@ -10,6 +10,9 @@ export default function MeetingResult({ meeting }) {
         <div className="result-title">
           <h2>📋 Meeting Analysis</h2>
           <span className="filename-badge">{meeting.filename}</span>
+          {meeting.meeting_type && meeting.meeting_type !== "general" && (
+            <span className="meeting-type-badge">{meeting.meeting_type}</span>
+          )}
         </div>
       </div>
 

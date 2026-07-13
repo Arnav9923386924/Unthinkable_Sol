@@ -7,6 +7,13 @@ export default function ActionItems({ items }) {
     );
   }
 
+  const priorityLabel = (p) => {
+    const val = (p || "medium").toLowerCase();
+    if (val === "high") return "🔴 High";
+    if (val === "low") return "🟢 Low";
+    return "🟡 Medium";
+  };
+
   return (
     <div className="action-items-table-wrapper">
       <table className="action-items-table">
@@ -15,6 +22,7 @@ export default function ActionItems({ items }) {
             <th>Task</th>
             <th>Owner</th>
             <th>Deadline</th>
+            <th>Priority</th>
           </tr>
         </thead>
         <tbody>
@@ -29,6 +37,11 @@ export default function ActionItems({ items }) {
               <td>
                 <span className={`deadline-badge ${item.deadline === "Not specified" ? "no-deadline" : ""}`}>
                   {item.deadline}
+                </span>
+              </td>
+              <td>
+                <span className={`priority-badge priority-${(item.priority || "medium").toLowerCase()}`}>
+                  {priorityLabel(item.priority)}
                 </span>
               </td>
             </tr>

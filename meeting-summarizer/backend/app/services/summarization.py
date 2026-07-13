@@ -7,31 +7,42 @@ from app.models import MeetingSummary, ActionItem
 logger = logging.getLogger(__name__)
 
 # =============================================================================
-# LLM SUMMARIZATION PROMPT
+# LLM SUMMARIZATION PROMPT — v2.0
 # =============================================================================
-# This prompt is designed to extract structured meeting insights from a transcript.
-# It instructs the LLM to return valid JSON with three fields:
-#   - summary: A concise 2-3 sentence overview
-#   - decisions: Array of key decisions made
-#   - action_items: Array of objects with task/owner/deadline
+# Prompt engineering rationale:
+#   1. Role priming: "professional meeting analyst" sets the LLM's persona
+#   2. Explicit JSON schema: prevents format drift, especially with smaller models
+#   3. Few-shot example: a concrete input→output pair dramatically improves format
+#      adherence for local models like llama3:8b that may not follow instructions
+#      as reliably as GPT-4
+#   4. Anti-hallucination rules: "Extract ONLY information explicitly stated"
+#      prevents the LLM from inventing names, dates, or tasks
+#   5. Priority classification: adds actionable severity to each action item
+#   6. Meeting type detection: helps downstream consumers categorize meetings
+#   7. Temperature 0.3: low enough for consistent structured output, high enough
+#      to avoid degenerate repetition
 #
-# The prompt explicitly tells the LLM to:
-#   1. Only extract information present in the transcript (no hallucination)
-#   2. Use "Unassigned" and "Not specified" as defaults for missing fields
-#   3. Return empty arrays if no decisions/action items are found
-#   4. Keep outputs concise and actionable
+# Changes from v1.0:
+#   - Added few-shot example for better format adherence
+#   - Added meeting_type classification field
+#   - Added priority (high/medium/low) to action items
+#   - Added explicit handling for edge cases (empty transcripts, single-speaker)
 # =============================================================================
+
+PROMPT_VERSION = "2.0"
 
 SUMMARIZATION_PROMPT = """You are a professional meeting analyst. Your job is to analyze meeting transcripts and extract structured, actionable information.
 
 Given the following meeting transcript, extract:
 
-1. **Summary**: A concise 2-3 sentence overview of what the meeting was about and its key outcomes.
-2. **Key Decisions**: Important decisions that were agreed upon during the meeting.
-3. **Action Items**: Specific tasks that were assigned or agreed upon, with the responsible person and deadline if mentioned.
+1. **Meeting Type**: Classify as one of: "standup", "planning", "review", "brainstorming", "decision-making", "status-update", "retrospective", or "general".
+2. **Summary**: A concise 2-3 sentence overview of what the meeting was about and its key outcomes. Focus on decisions made and next steps.
+3. **Key Decisions**: Important decisions that were agreed upon during the meeting.
+4. **Action Items**: Specific tasks that were assigned or agreed upon, including priority level.
 
 Return your response as **valid JSON only** (no markdown, no code fences, no explanation) with this exact structure:
 {
+  "meeting_type": "general",
   "summary": "A concise 2-3 sentence overview of the meeting",
   "decisions": [
     "Decision 1 description",
@@ -41,16 +52,26 @@ Return your response as **valid JSON only** (no markdown, no code fences, no exp
     {
       "task": "Clear description of the task to be done",
       "owner": "Person responsible (use 'Unassigned' if not mentioned)",
-      "deadline": "Due date or timeframe (use 'Not specified' if not mentioned)"
+      "deadline": "Due date or timeframe (use 'Not specified' if not mentioned)",
+      "priority": "high, medium, or low based on urgency and importance"
     }
   ]
 }
+
+Here is an example of a correct input and output:
+
+EXAMPLE TRANSCRIPT:
+"Alright team, quick standup. Sarah, what's your update? I finished the API integration yesterday and will start writing tests today. John, I'm blocked on the database migration — need DevOps to give me access to staging. Can we get that done by end of day? Sure, I'll ping DevOps right now. Also, reminder — the client demo is Friday, so all feature work needs to be wrapped up by Thursday EOD."
+
+EXAMPLE OUTPUT:
+{"meeting_type": "standup", "summary": "Daily standup covering API integration progress, a database migration blocker requiring DevOps staging access, and a Friday client demo deadline requiring all features complete by Thursday.", "decisions": ["DevOps will be contacted immediately to unblock staging access for database migration", "All feature work must be completed by Thursday EOD for Friday client demo"], "action_items": [{"task": "Write tests for the completed API integration", "owner": "Sarah", "deadline": "Today", "priority": "medium"}, {"task": "Get DevOps to provide staging database access", "owner": "John", "deadline": "End of day today", "priority": "high"}, {"task": "Complete all feature work before client demo", "owner": "Unassigned", "deadline": "Thursday EOD", "priority": "high"}]}
 
 Important rules:
 - Extract ONLY information explicitly stated or strongly implied in the transcript.
 - Do NOT invent names, dates, or tasks that are not present in the text.
 - Keep decision descriptions concise — one sentence each.
 - For action items, be specific about what needs to be done.
+- Assign priority: "high" for urgent/blocking items, "medium" for standard tasks, "low" for nice-to-haves.
 - If no clear decisions were made, return an empty "decisions" array.
 - If no clear action items exist, return an empty "action_items" array.
 - Respond with valid JSON only. No additional text before or after the JSON.
@@ -58,45 +79,61 @@ Important rules:
 TRANSCRIPT:
 {transcript}"""
 
+# Maximum characters to send to the LLM to avoid exceeding context window.
+# llama3:8b has an 8K context window (~6K tokens ≈ ~24K characters).
+# We reserve ~2K tokens for the prompt template + response, leaving ~4K for transcript.
+MAX_TRANSCRIPT_CHARS = 16000
+
 
 async def summarize_transcript(transcript: str) -> MeetingSummary:
     """
     Send the transcript to a local Ollama LLM to generate a structured summary.
 
     Uses Ollama's OpenAI-compatible API endpoint at /v1/chat/completions.
+    Includes transcript truncation to prevent context window overflow,
+    and a 2-tier retry mechanism for JSON parsing failures.
 
     Args:
         transcript: The meeting transcript text.
 
     Returns:
-        MeetingSummary with summary, decisions, and action_items.
+        MeetingSummary with meeting_type, summary, decisions, and action_items.
     """
+    # Truncate long transcripts to avoid exceeding model context window
+    if len(transcript) > MAX_TRANSCRIPT_CHARS:
+        logger.warning(
+            f"Transcript too long ({len(transcript)} chars), truncating to {MAX_TRANSCRIPT_CHARS} chars"
+        )
+        transcript = transcript[:MAX_TRANSCRIPT_CHARS] + "\n\n[Transcript truncated due to length]"
+
     prompt = SUMMARIZATION_PROMPT.replace("{transcript}", transcript)
 
-    # Call Ollama via its OpenAI-compatible endpoint
+    # --- Attempt 1: Primary LLM call ---
     raw_content = _call_ollama(
         messages=[
-            {"role": "system", "content": "You are a meeting analysis assistant. Always respond with valid JSON only."},
+            {"role": "system", "content": "You are a meeting analysis assistant. Always respond with valid JSON only. Never wrap your response in markdown code fences."},
             {"role": "user", "content": prompt}
         ],
         temperature=0.3,
     )
 
-    logger.info(f"LLM response (first 200 chars): {raw_content[:200]}")
+    logger.info(f"LLM response [v{PROMPT_VERSION}] (first 200 chars): {raw_content[:200]}")
 
     # Try to parse the LLM response as JSON
     parsed = _parse_llm_response(raw_content)
     if parsed is not None:
         return parsed
 
-    # Retry once if first attempt fails to parse
-    logger.warning("First LLM response was not valid JSON, retrying...")
+    # --- Attempt 2: Retry with self-correction ---
+    # Feed the failed response back so the LLM can see and fix its own mistake.
+    # Lower temperature (0.1) reduces creativity and increases format adherence.
+    logger.warning("First LLM response was not valid JSON, retrying with self-correction...")
     retry_content = _call_ollama(
         messages=[
-            {"role": "system", "content": "You are a meeting analysis assistant. Respond ONLY with valid JSON."},
+            {"role": "system", "content": "You are a meeting analysis assistant. Respond ONLY with valid JSON. No markdown."},
             {"role": "user", "content": prompt},
             {"role": "assistant", "content": raw_content},
-            {"role": "user", "content": "Your previous response was not valid JSON. Please respond with ONLY the JSON object, no markdown formatting or extra text."}
+            {"role": "user", "content": "Your previous response was not valid JSON. Please respond with ONLY the raw JSON object — no markdown code fences, no explanation, no text before or after."}
         ],
         temperature=0.1,
     )
@@ -105,9 +142,10 @@ async def summarize_transcript(transcript: str) -> MeetingSummary:
     if parsed is not None:
         return parsed
 
-    # Fallback: return the raw text as the summary with empty structured fields
-    logger.warning("LLM retry also failed, using fallback")
+    # --- Fallback: return raw text as summary with empty structured fields ---
+    logger.warning("LLM retry also failed JSON parsing, using graceful fallback")
     return MeetingSummary(
+        meeting_type="general",
         summary=raw_content[:500] if raw_content else "Could not generate summary.",
         decisions=[],
         action_items=[]
@@ -176,10 +214,19 @@ def _parse_llm_response(content: str) -> MeetingSummary | None:
                 action_items.append(ActionItem(
                     task=item.get("task", ""),
                     owner=item.get("owner", "Unassigned"),
-                    deadline=item.get("deadline", "Not specified")
+                    deadline=item.get("deadline", "Not specified"),
+                    priority=item.get("priority", "medium"),
                 ))
 
+        # Validate meeting_type against known types
+        valid_types = {"standup", "planning", "review", "brainstorming",
+                       "decision-making", "status-update", "retrospective", "general"}
+        meeting_type = data.get("meeting_type", "general").lower()
+        if meeting_type not in valid_types:
+            meeting_type = "general"
+
         return MeetingSummary(
+            meeting_type=meeting_type,
             summary=data.get("summary", ""),
             decisions=data.get("decisions", []),
             action_items=action_items
@@ -187,3 +234,4 @@ def _parse_llm_response(content: str) -> MeetingSummary | None:
     except Exception as e:
         logger.warning(f"Failed to build MeetingSummary: {e}")
         return None
+

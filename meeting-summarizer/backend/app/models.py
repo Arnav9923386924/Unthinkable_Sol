@@ -10,10 +10,12 @@ class ActionItem(BaseModel):
     task: str
     owner: str = "Unassigned"
     deadline: str = "Not specified"
+    priority: str = "medium"  # high, medium, or low
 
 
 class MeetingSummary(BaseModel):
     """Structured summary output from the LLM."""
+    meeting_type: str = "general"
     summary: str
     decisions: list[str]
     action_items: list[ActionItem]
@@ -24,6 +26,7 @@ class MeetingResponse(BaseModel):
     id: str
     filename: str
     transcript: str
+    meeting_type: str = "general"
     summary: str
     decisions: list[str]
     action_items: list[ActionItem]

@@ -16,6 +16,7 @@ def init_db():
                 id TEXT PRIMARY KEY,
                 filename TEXT NOT NULL,
                 transcript TEXT NOT NULL,
+                meeting_type TEXT DEFAULT 'general',
                 summary TEXT DEFAULT '',
                 decisions TEXT DEFAULT '[]',
                 action_items TEXT DEFAULT '[]',
@@ -37,13 +38,13 @@ def get_connection():
 
 
 def save_meeting(meeting_id: str, filename: str, transcript: str,
-                 summary: str, decisions: list, action_items: list):
+                 meeting_type: str, summary: str, decisions: list, action_items: list):
     """Insert a new meeting record into the database."""
     with get_connection() as conn:
         conn.execute(
-            """INSERT INTO meetings (id, filename, transcript, summary, decisions, action_items)
-               VALUES (?, ?, ?, ?, ?, ?)""",
-            (meeting_id, filename, transcript, summary,
+            """INSERT INTO meetings (id, filename, transcript, meeting_type, summary, decisions, action_items)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (meeting_id, filename, transcript, meeting_type, summary,
              json.dumps(decisions), json.dumps(action_items))
         )
         conn.commit()
@@ -71,6 +72,7 @@ def _row_to_dict(row: sqlite3.Row) -> dict:
         "id": row["id"],
         "filename": row["filename"],
         "transcript": row["transcript"],
+        "meeting_type": row["meeting_type"] if "meeting_type" in row.keys() else "general",
         "summary": row["summary"],
         "decisions": json.loads(row["decisions"]),
         "action_items": json.loads(row["action_items"]),
