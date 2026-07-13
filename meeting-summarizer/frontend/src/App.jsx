@@ -104,7 +104,7 @@ function App() {
       </main>
 
       <footer className="app-footer">
-        <p>Meeting Summarizer • Powered by OpenAI Whisper + OpenRouter</p>
+        <p>Meeting Summarizer • Powered by local OpenAI Whisper & Ollama</p>
       </footer>
     </div>
   );

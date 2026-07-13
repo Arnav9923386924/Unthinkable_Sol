@@ -30,7 +30,7 @@ def _get_model():
     return _model
 
 
-async def transcribe_audio(file_path: str) -> str:
+async def transcribe_audio(file_path: str) -> dict:
     """
     Transcribe an audio file using local OpenAI Whisper model.
 
@@ -42,7 +42,7 @@ async def transcribe_audio(file_path: str) -> str:
         file_path: Path to the audio file on disk.
 
     Returns:
-        The transcribed text.
+        A dict containing "text", "segments", and "duration".
     """
     model = _get_model()
 
@@ -63,6 +63,21 @@ async def transcribe_audio(file_path: str) -> str:
         )
 
     transcript = result.get("text", "").strip()
-    logger.info(f"Transcription complete: {len(transcript)} characters")
+    segments = result.get("segments", [])
+    duration = segments[-1].get("end", 0.0) if segments else 0.0
+    logger.info(f"Transcription complete: {len(transcript)} characters, duration: {duration}s")
 
-    return transcript
+    # Sanitize segments to keep start, end, and text
+    clean_segments = []
+    for s in segments:
+        clean_segments.append({
+            "start": s.get("start", 0.0),
+            "end": s.get("end", 0.0),
+            "text": s.get("text", "").strip()
+        })
+
+    return {
+        "text": transcript,
+        "segments": clean_segments,
+        "duration": duration
+    }

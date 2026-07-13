@@ -20,14 +20,29 @@ def init_db():
                 summary TEXT DEFAULT '',
                 decisions TEXT DEFAULT '[]',
                 action_items TEXT DEFAULT '[]',
+                audio_duration REAL DEFAULT 0.0,
+                processing_time REAL DEFAULT 0.0,
+                segments TEXT DEFAULT '[]',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        # Migrate existing databases: add meeting_type column if missing
+        # Migrate existing databases: add columns if missing
         try:
             conn.execute("ALTER TABLE meetings ADD COLUMN meeting_type TEXT DEFAULT 'general'")
         except Exception:
-            pass  # Column already exists
+            pass
+        try:
+            conn.execute("ALTER TABLE meetings ADD COLUMN audio_duration REAL DEFAULT 0.0")
+        except Exception:
+            pass
+        try:
+            conn.execute("ALTER TABLE meetings ADD COLUMN processing_time REAL DEFAULT 0.0")
+        except Exception:
+            pass
+        try:
+            conn.execute("ALTER TABLE meetings ADD COLUMN segments TEXT DEFAULT '[]'")
+        except Exception:
+            pass
         conn.commit()
 
 
@@ -43,14 +58,17 @@ def get_connection():
 
 
 def save_meeting(meeting_id: str, filename: str, transcript: str,
-                 meeting_type: str, summary: str, decisions: list, action_items: list):
+                 meeting_type: str, summary: str, decisions: list, action_items: list,
+                 audio_duration: float = 0.0, processing_time: float = 0.0, segments: list = None):
     """Insert a new meeting record into the database."""
+    if segments is None:
+        segments = []
     with get_connection() as conn:
         conn.execute(
-            """INSERT INTO meetings (id, filename, transcript, meeting_type, summary, decisions, action_items)
-               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            """INSERT INTO meetings (id, filename, transcript, meeting_type, summary, decisions, action_items, audio_duration, processing_time, segments)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (meeting_id, filename, transcript, meeting_type, summary,
-             json.dumps(decisions), json.dumps(action_items))
+             json.dumps(decisions), json.dumps(action_items), audio_duration, processing_time, json.dumps(segments))
         )
         conn.commit()
 
@@ -82,4 +100,7 @@ def _row_to_dict(row: sqlite3.Row) -> dict:
         "decisions": json.loads(row["decisions"]),
         "action_items": json.loads(row["action_items"]),
         "created_at": row["created_at"],
+        "audio_duration": row["audio_duration"] if "audio_duration" in row.keys() else 0.0,
+        "processing_time": row["processing_time"] if "processing_time" in row.keys() else 0.0,
+        "segments": json.loads(row["segments"]) if ("segments" in row.keys() and row["segments"]) else [],
     }

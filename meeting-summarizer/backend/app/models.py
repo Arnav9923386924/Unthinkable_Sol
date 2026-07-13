@@ -31,6 +31,9 @@ class MeetingResponse(BaseModel):
     decisions: list[str]
     action_items: list[ActionItem]
     created_at: str
+    audio_duration: Optional[float] = None
+    processing_time: Optional[float] = None
+    segments: Optional[list[dict]] = None
 
 
 class MeetingListItem(BaseModel):

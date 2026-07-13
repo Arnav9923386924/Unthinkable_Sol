@@ -1,6 +1,7 @@
 import os
 import uuid
 import tempfile
+import time
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from app.config import settings
 from app.models import MeetingResponse, MeetingListItem, ActionItem
@@ -38,6 +39,7 @@ async def upload_meeting(file: UploadFile = File(...)):
     # --- Save to temp file for processing ---
     meeting_id = str(uuid.uuid4())
     temp_path = None
+    start_time = time.time()
 
     try:
         with tempfile.NamedTemporaryFile(delete=False, suffix=file_ext) as tmp:
@@ -46,7 +48,10 @@ async def upload_meeting(file: UploadFile = File(...)):
 
         # --- Step 1: Transcribe with Whisper ---
         try:
-            transcript = await transcribe_audio(temp_path)
+            transcription_res = await transcribe_audio(temp_path)
+            transcript = transcription_res["text"]
+            segments = transcription_res["segments"]
+            audio_duration = transcription_res["duration"]
         except ValueError as e:
             raise HTTPException(status_code=500, detail=str(e))
         except Exception as e:
@@ -72,6 +77,8 @@ async def upload_meeting(file: UploadFile = File(...)):
                 detail=f"Summarization service unavailable: {str(e)}"
             )
 
+        processing_time = time.time() - start_time
+
         # --- Step 3: Store in SQLite ---
         action_items_dicts = [item.model_dump() for item in summary_result.action_items]
         save_meeting(
@@ -82,6 +89,9 @@ async def upload_meeting(file: UploadFile = File(...)):
             summary=summary_result.summary,
             decisions=summary_result.decisions,
             action_items=action_items_dicts,
+            audio_duration=audio_duration,
+            processing_time=processing_time,
+            segments=segments
         )
 
         return MeetingResponse(
@@ -93,6 +103,9 @@ async def upload_meeting(file: UploadFile = File(...)):
             decisions=summary_result.decisions,
             action_items=summary_result.action_items,
             created_at="just now",
+            audio_duration=audio_duration,
+            processing_time=processing_time,
+            segments=segments
         )
 
     finally:
@@ -120,6 +133,9 @@ async def get_meeting_by_id(meeting_id: str):
         decisions=meeting["decisions"],
         action_items=action_items,
         created_at=meeting["created_at"],
+        audio_duration=meeting.get("audio_duration", 0.0),
+        processing_time=meeting.get("processing_time", 0.0),
+        segments=meeting.get("segments", []),
     )
 
 
