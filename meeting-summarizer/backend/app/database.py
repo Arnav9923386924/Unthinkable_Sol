@@ -9,7 +9,7 @@ def get_db_path() -> str:
 
 
 def init_db():
-    """Create the meetings table if it doesn't exist."""
+    """Create the meetings table if it doesn't exist, and migrate if needed."""
     with get_connection() as conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS meetings (
@@ -23,6 +23,11 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        # Migrate existing databases: add meeting_type column if missing
+        try:
+            conn.execute("ALTER TABLE meetings ADD COLUMN meeting_type TEXT DEFAULT 'general'")
+        except Exception:
+            pass  # Column already exists
         conn.commit()
 
 
