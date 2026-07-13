@@ -23,36 +23,24 @@ The following diagram illustrates the lifecycle of an audio file upload and proc
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as React Frontend
-    participant Server as FastAPI Server
+    actor Client as React Frontend
+    participant API as FastAPI Backend
+    participant Whisper as Whisper (STT)
+    participant Ollama as Ollama (LLM)
     participant DB as SQLite DB
-    participant Whisper as Local Whisper (STT)
-    participant Ollama as Local Ollama (LLM)
 
-    User->>Server: POST /api/meetings/upload (Audio File)
-    Note over Server: 1. Validate file extension & size<br/>2. Save to temporary secure path
-    
-    Server->>Whisper: Transcribe Audio File (ThreadPoolExecutor)
-    Note over Whisper: Run inference on CUDA (GPU)<br/>Auto-fallback to CPU if VRAM full
-    Whisper-->>Server: Return raw transcript string
-    
-    Server->>Ollama: Generate structured analysis (Prompt v2.0)
-    Note over Ollama: Context truncation to 16k chars<br/>Temperature: 0.3 for formatting
-    Ollama-->>Server: Return JSON response
-    
-    alt JSON parsing fails
-        Server->>Ollama: Retry with self-correction prompt (Temp 0.1)
-        Ollama-->>Server: Return corrected JSON response
+    Client->>API: Upload audio (POST /upload)
+    Note over API: Validate file size & type
+    API->>Whisper: Run transcription (async thread)
+    Note over Whisper: Lazy-loaded model (CUDA/CPU)
+    Whisper-->>API: Return raw transcript text
+    API->>Ollama: Request structured summary (Prompt v2.0)
+    Note over Ollama: Extract type, summary, decisions & actions
+    alt JSON Parse Fails
+        API->>Ollama: Retry with self-correction prompt (Temp 0.1)
     end
-    
-    alt Retry also fails
-        Note over Server: Fallback: summary is raw text,<br/>empty decisions & action items
-    end
-
-    Server->>DB: Save meeting metadata, transcript, & JSON structure
-    DB-->>Server: Confirm write (Automatic schema migrations)
-    Server-->>User: Return HTTP 200 (MeetingResponse JSON)
-    Note over User: Render Warm Dark UI with badges,<br/>Overview, Decisions, and Priority Table
+    API->>DB: Save transcript, summary, & action items
+    API-->>Client: Return JSON response (HTTP 200)
 ```
 
 ---
