@@ -33,3 +33,7 @@ Thumbs.db
 # Whisper model cache
 *.pt
 *.pdf
+
+# Databases
+*.db
+meeting-summarizer/backend/meetings.db
