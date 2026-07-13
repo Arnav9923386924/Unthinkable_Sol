@@ -20,28 +20,7 @@ A high-performance, local-first, zero-cost web application that transcribes meet
 
 The following diagram illustrates the lifecycle of an audio file upload and processing pipeline:
 
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Client as React Frontend
-    participant API as FastAPI Backend
-    participant Whisper as Whisper (STT)
-    participant Ollama as Ollama (LLM)
-    participant DB as SQLite DB
-
-    Client->>API: Upload audio (POST /upload)
-    Note over API: Validate file size & type
-    API->>Whisper: Run transcription (async thread)
-    Note over Whisper: Lazy-loaded model (CUDA/CPU)
-    Whisper-->>API: Return raw transcript text
-    API->>Ollama: Request structured summary (Prompt v2.0)
-    Note over Ollama: Extract type, summary, decisions & actions
-    alt JSON Parse Fails
-        API->>Ollama: Retry with self-correction prompt (Temp 0.1)
-    end
-    API->>DB: Save transcript, summary, & action items
-    API-->>Client: Return JSON response (HTTP 200)
-```
+![System Architecture](./meeting_summarizer_pipeline.svg)
 
 ---
 
