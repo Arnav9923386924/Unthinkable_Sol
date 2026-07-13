@@ -6,19 +6,19 @@
 
 /* --- CSS Variables --- */
 :root {
-  --bg-primary: #0f1117;
-  --bg-secondary: #1a1d27;
-  --bg-tertiary: #242838;
-  --bg-card: #1e2230;
-  --bg-hover: #2a2f42;
+  --bg-primary: #191816;
+  --bg-secondary: #1e1d1a;
+  --bg-tertiary: #272520;
+  --bg-card: #21201c;
+  --bg-hover: #2e2c26;
 
-  --text-primary: #e8eaf0;
-  --text-secondary: #9ca3b8;
-  --text-muted: #6b7394;
+  --text-primary: #eae8e0;
+  --text-secondary: #b0a89a;
+  --text-muted: #7a7060;
 
-  --accent: #6366f1;
-  --accent-light: #818cf8;
-  --accent-dim: rgba(99, 102, 241, 0.15);
+  --accent: #f59e0b;
+  --accent-light: #fbbf24;
+  --accent-dim: rgba(245, 158, 11, 0.12);
 
   --success: #22c55e;
   --success-dim: rgba(34, 197, 94, 0.12);
@@ -27,8 +27,8 @@
   --error: #ef4444;
   --error-dim: rgba(239, 68, 68, 0.12);
 
-  --border: #2d3348;
-  --border-light: #3a4060;
+  --border: #302e28;
+  --border-light: #3e3b34;
 
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -93,13 +93,13 @@ body {
 .logo-icon {
   width: 44px;
   height: 44px;
-  background: linear-gradient(135deg, var(--accent), #8b5cf6);
+  background: linear-gradient(135deg, var(--accent), #d97706);
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
 }
 
 .logo h1 {
@@ -161,7 +161,7 @@ body {
 .drop-zone.drag-active {
   border-color: var(--accent-light);
   background: var(--accent-dim);
-  box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.12);
 }
 
 .drop-zone.disabled {
@@ -179,6 +179,46 @@ body {
 .upload-icon {
   color: var(--accent-light);
   opacity: 0.8;
+}
+
+/* --- Audio Waveform Animation --- */
+.waveform-animation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2.5px;
+  height: 48px;
+  padding: 0 0.5rem;
+}
+
+.wave-bar {
+  display: inline-block;
+  width: 3px;
+  min-height: 4px;
+  background: linear-gradient(180deg, #f59e0b, #d97706);
+  border-radius: 2px;
+  animation: waveBarBounce 1.2s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+.drop-zone:hover .wave-bar {
+  background: linear-gradient(180deg, #fbbf24, #f59e0b);
+  filter: brightness(1.2);
+}
+
+@keyframes waveBarBounce {
+  0% {
+    transform: scaleY(0.3);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleY(0.5);
+    opacity: 0.7;
+  }
 }
 
 .drop-zone-text {
@@ -231,7 +271,7 @@ body {
   align-items: center;
   gap: 0.5rem;
   padding: 0.65rem 1.5rem;
-  background: linear-gradient(135deg, var(--accent), #8b5cf6);
+  background: linear-gradient(135deg, var(--accent), #d97706);
   color: white;
   border: none;
   border-radius: var(--radius-sm);
@@ -240,12 +280,12 @@ body {
   cursor: pointer;
   transition: all var(--transition);
   font-family: inherit;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
 }
 
 .upload-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3);
 }
 
 .upload-btn:active {
@@ -320,7 +360,7 @@ body {
 .pulse-core {
   width: 20px;
   height: 20px;
-  background: linear-gradient(135deg, var(--accent), #8b5cf6);
+  background: linear-gradient(135deg, var(--accent), #d97706);
   border-radius: 50%;
   animation: pulseBeat 1.5s ease-in-out infinite;
 }

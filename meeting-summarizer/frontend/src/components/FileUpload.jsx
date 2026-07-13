@@ -89,17 +89,22 @@ export default function FileUpload({ onUploadStart, onUploadSuccess, onUploadErr
           disabled={isProcessing}
         />
         <div className="drop-zone-content">
-          <div className="upload-icon">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="17 8 12 3 7 8" />
-              <line x1="12" y1="3" x2="12" y2="15" />
-            </svg>
+          <div className="waveform-animation">
+            {Array.from({ length: 40 }).map((_, i) => (
+              <span
+                key={i}
+                className="wave-bar"
+                style={{
+                  animationDelay: `${(i * 0.07) % 1.2}s`,
+                  height: `${12 + Math.sin(i * 0.8) * 10 + Math.random() * 8}px`,
+                }}
+              />
+            ))}
           </div>
           <p className="drop-zone-text">
-            {dragActive ? "Drop your audio file here" : "Drag & drop your meeting audio"}
+            {dragActive ? "Drop your audio file here" : "Drop meeting audio here"}
           </p>
-          <p className="drop-zone-hint">or click to browse • MP3, WAV, M4A, WebM, OGG • Max {MAX_SIZE_MB}MB</p>
+          <p className="drop-zone-hint">or click to browse — MP3, WAV, M4A, MP4, WEBM, OGG, FLAC (max {MAX_SIZE_MB}MB)</p>
         </div>
       </div>
 
