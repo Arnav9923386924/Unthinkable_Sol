@@ -26,7 +26,11 @@ A high-performance, local-first, zero-cost web application that transcribes meet
 
 ## 🎬 Video Demo
 
-You can watch a full end-to-end walk-through and features demonstration of the application:
+Watch the full end-to-end walk-through and features demonstration of the application directly below:
+
+<video src="./docs/demo_walkthrough.mp4" width="100%" controls></video>
+
+Or watch it on Google Drive:
 👉 **[Watch the Meeting Summarizer Demo Video on Google Drive](https://drive.google.com/file/d/1puWsmg0EJK_vghg8HxK2OlRrCOGW-I-H/view?usp=sharing)**
 
 ---
