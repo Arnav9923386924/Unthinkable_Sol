@@ -2,6 +2,8 @@
 
 A high-performance, local-first, zero-cost web application that transcribes meeting audio files and generates structured, action-oriented summaries, decision logs, and prioritized action items.
 
+[![Watch the Demo Video](https://img.shields.io/badge/Demo-Watch%20Video-orange?style=for-the-badge&logo=google-drive)](https://drive.google.com/file/d/1puWsmg0EJK_vghg8HxK2OlRrCOGW-I-H/view?usp=sharing)
+
 ---
 
 ## 🌟 Key Features
@@ -19,6 +21,13 @@ A high-performance, local-first, zero-cost web application that transcribes meet
 ## 🏗️ System Architecture
 
 ![System Architecture](./meeting_summarizer_pipeline.svg)
+
+---
+
+## 🎬 Video Demo
+
+You can watch a full end-to-end walk-through and features demonstration of the application:
+👉 **[Watch the Meeting Summarizer Demo Video on Google Drive](https://drive.google.com/file/d/1puWsmg0EJK_vghg8HxK2OlRrCOGW-I-H/view?usp=sharing)**
 
 ---
 
