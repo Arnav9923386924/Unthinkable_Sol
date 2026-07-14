@@ -18,9 +18,38 @@ A high-performance, local-first, zero-cost web application that transcribes meet
 
 ## 🏗️ System Architecture
 
-The following diagram illustrates the lifecycle of an audio file upload and processing pipeline:
-
 ![System Architecture](./meeting_summarizer_pipeline.svg)
+
+---
+
+## 📸 Visual Walkthrough
+
+### 1. Upload & Initial State
+We start at the main landing page, which loads our historical meeting summaries from SQLite. We can then trigger a new upload via the dropzone.
+
+| 1. Landing Page & History | 2. File Selection / Dropzone |
+| :---: | :---: |
+| ![Landing Page](./docs/screenshots/1_landing_page.png) | ![File Selected](./docs/screenshots/2_file_selected.png) |
+
+### 2. The Processing Pipeline
+Once a file is selected, it goes through a progress flow:
+*   **Uploading**: The raw audio file is sent to the FastAPI backend.
+*   **Transcription & Summarization**: The backend processes the audio with Whisper (STT) and Llama 3 (LLM) asynchronously while showing a progress loader.
+
+| 3. Transcribing & Summarizing |
+| :---: |
+| ![Processing](./docs/screenshots/3_processing.png) |
+
+### 3. Structured Meeting Results
+Once processing completes, the frontend renders the full transcript, structured summaries, key decisions, and priority-coded action items with assignees and deadlines.
+
+| 4. Summary & Decisions | 5. Action Items Table |
+| :---: | :---: |
+| ![Summary Tab](./docs/screenshots/4_summary_tab.png) | ![Action Items Tab](./docs/screenshots/5_action_items_tab.png) |
+
+| 6. Segmented Transcript | 7. History Selection |
+| :---: | :---: |
+| ![Transcript Tab](./docs/screenshots/6_transcript_tab.png) | ![History Selection](./docs/screenshots/7_history_selection.png) |
 
 ---
 
