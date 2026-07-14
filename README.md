@@ -28,8 +28,6 @@ Watch the full end-to-end walk-through and features demonstration of the applica
 
 [![Watch the Demo Video](https://img.shields.io/badge/Demo-Watch%20Video-orange?style=for-the-badge&logo=google-drive)](https://drive.google.com/file/d/1puWsmg0EJK_vghg8HxK2OlRrCOGW-I-H/view?usp=sharing)
 
-👉 **[Watch the Meeting Summarizer Demo Video on Google Drive](https://drive.google.com/file/d/1puWsmg0EJK_vghg8HxK2OlRrCOGW-I-H/view?usp=sharing)**
-
 ---
 
 ## 📸 Visual Walkthrough
