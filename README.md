@@ -2,8 +2,6 @@
 
 A high-performance, local-first, zero-cost web application that transcribes meeting audio files and generates structured, action-oriented summaries, decision logs, and prioritized action items.
 
-[![Watch the Demo Video](https://img.shields.io/badge/Demo-Watch%20Video-orange?style=for-the-badge&logo=google-drive)](https://drive.google.com/file/d/1puWsmg0EJK_vghg8HxK2OlRrCOGW-I-H/view?usp=sharing)
-
 ---
 
 ## 🌟 Key Features
@@ -28,7 +26,7 @@ A high-performance, local-first, zero-cost web application that transcribes meet
 
 Watch the full end-to-end walk-through and features demonstration of the application directly below:
 
-<video src="./docs/demo_walkthrough.mp4" width="100%" controls></video>
+<video src="https://github.com/Arnav9923386924/Unthinkable_Sol/raw/main/docs/demo_walkthrough.mp4" width="100%" controls></video>
 
 Or watch it on Google Drive:
 👉 **[Watch the Meeting Summarizer Demo Video on Google Drive](https://drive.google.com/file/d/1puWsmg0EJK_vghg8HxK2OlRrCOGW-I-H/view?usp=sharing)**
