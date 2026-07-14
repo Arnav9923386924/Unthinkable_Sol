@@ -36,14 +36,14 @@ SUMMARIZATION_PROMPT = """You are a professional meeting analyst. Your job is to
 Given the following meeting transcript, extract:
 
 1. **Meeting Type**: Classify as one of: "standup", "planning", "review", "brainstorming", "decision-making", "status-update", "retrospective", or "general".
-2. **Summary**: A concise 2-3 sentence overview of what the meeting was about and its key outcomes. Focus on decisions made and next steps.
+2. **Summary**: An elaborate 5-6 sentence overview of the meeting. It must cover: what was discussed, the flow/order of agenda items, key context behind decisions (not just the decision itself), and any notable discussion points or disagreements. Stay strictly factual to the transcript content, and do not invent any details.
 3. **Key Decisions**: Important decisions that were agreed upon during the meeting.
 4. **Action Items**: Specific tasks that were assigned or agreed upon, including priority level.
 
 Return your response as **valid JSON only** (no markdown, no code fences, no explanation) with this exact structure:
 {
   "meeting_type": "general",
-  "summary": "A concise 2-3 sentence overview of the meeting",
+  "summary": "An elaborate 5-6 sentence overview covering topics discussed, flow of agenda, context of decisions, and notable discussion/disagreement points.",
   "decisions": [
     "Decision 1 description",
     "Decision 2 description"
@@ -64,7 +64,7 @@ EXAMPLE TRANSCRIPT:
 "Alright team, quick standup. Sarah, what's your update? I finished the API integration yesterday and will start writing tests today. John, I'm blocked on the database migration — need DevOps to give me access to staging. Can we get that done by end of day? Sure, I'll ping DevOps right now. Also, reminder — the client demo is Friday, so all feature work needs to be wrapped up by Thursday EOD."
 
 EXAMPLE OUTPUT:
-{"meeting_type": "standup", "summary": "Daily standup covering API integration progress, a database migration blocker requiring DevOps staging access, and a Friday client demo deadline requiring all features complete by Thursday.", "decisions": ["DevOps will be contacted immediately to unblock staging access for database migration", "All feature work must be completed by Thursday EOD for Friday client demo"], "action_items": [{"task": "Write tests for the completed API integration", "owner": "Sarah", "deadline": "Today", "priority": "medium"}, {"task": "Get DevOps to provide staging database access", "owner": "John", "deadline": "End of day today", "priority": "high"}, {"task": "Complete all feature work before client demo", "owner": "Unassigned", "deadline": "Thursday EOD", "priority": "high"}]}
+{"meeting_type": "standup", "summary": "The team held their daily standup meeting to discuss project updates and upcoming deadlines. Sarah kicked off the updates by announcing that the API integration was completed yesterday, and she plans to start writing tests today. John then raised a major blocker regarding the database migration, noting that he currently lacks access to staging and needs DevOps to resolve this today. The team discussed the urgency of this blocker and agreed that John should contact DevOps immediately to prevent project lag. Lastly, the team reviewed the upcoming client demo scheduled for Friday, confirming that all feature work must be wrapped up by Thursday EOD to ensure a smooth presentation.", "decisions": ["DevOps will be contacted immediately to unblock staging access for database migration", "All feature work must be completed by Thursday EOD for Friday client demo"], "action_items": [{"task": "Write tests for the completed API integration", "owner": "Sarah", "deadline": "Today", "priority": "medium"}, {"task": "Get DevOps to provide staging database access", "owner": "John", "deadline": "End of day today", "priority": "high"}, {"task": "Complete all feature work before client demo", "owner": "Unassigned", "deadline": "Thursday EOD", "priority": "high"}]}
 
 Important rules:
 - Extract ONLY information explicitly stated or strongly implied in the transcript.
